@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Фейковий Журнал</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; background: #fff; color: #222; }
+  h1 { color: #333; }
+  .toolbar { margin-bottom: 20px; }
+  .scale-control { margin-bottom: 10px; }
+  .month-table { border-collapse: collapse; width: 100%; font-size: 14px; margin-bottom: 20px; transition: transform 0.2s; transform-origin: left top; }
+  .month-table th, .month-table td { border: 1px solid #ccc; text-align: center; padding: 5px; min-width: 45px; }
+  .today { background: #c2f0c2 !important; } 
+  .control { background: #e0d4f7 !important; } 
+  .popup, .choicePopup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #fff; padding: 20px; border: 1px solid #aaa; display: none; z-index: 10; width: 250px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .popup input, .popup select { display: block; margin: 5px 0; width: 100%; }
+  .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 5;
+  }
+  th { position: sticky; top: 0; background: #f9f9f9; }
+  button { margin-top: 5px; width: 100%; }
+</style>
+</head>
+<body>
+
+<h1>Журнал класу</h1>
+
+<div class="toolbar">
+  Клас: 
+  <select id="classSelect" onchange="checkClass()"></select>
+  Предмет: 
+  <select id="subjectSelect" onchange="buildJournal()"></select>
+</div>
+
+<div class="scale-control">
+  Масштаб: <input type="range" min="50" max="150" value="100" id="zoomRange" oninput="setZoom(this.value)"> %
+</div>
+
+<div id="journalContainer"></div>
+
+<div class="overlay" id="overlay"></div>
+
+<div class="popup" id="popup">
+  <h3>📍 Додати / Змінити</h3>
+  <label>Оцінка:
+    <select id="mark"><option value="">—</option></select>
+  </label>
+  <label><input type="checkbox" id="absent"> Н (відсутній)</label>
+  <label>Коментар: <input type="text" id="comment"></label>
+  <button onclick="saveData()">Зберегти</button>
+  <button onclick="closePopup()">Закрити</button>
+</div>
+
+<div class="choicePopup" id="choicePopup">
+  <h3>Виберіть дію</h3>
+  <button onclick="readComment()">📖 Прочитати коментар</button>
+  <button onclick="editData()">✏️ Змінити</button>
+  <button onclick="closeChoice()">Закрити</button>
+</div>
+
+<script>
+let journalData = {};
+let commentsStore = {};
+let activeCell=null, activeKey=null;
+
+const students=[
+  "Борис Анна Василівна","Борис Діана Володимирівна","Вачко Ярема Тарасович","Ващишин Вероніка Юріївна",
+  "Голуб Максим Андрійович","Гринчук Катерина Романівна","Гриняк Дмитро Васильович","Гудь Святослав Павлович",
+  "Гурський Остап Володимирович","Забитівський Вʼячеслав Олександрович","Іванчишин Олександр Андрійович",
+  "Іванюк Роксолана Ігорівна","Карвацька Христина Тарасівна","Книш Аріана Андріївна","Ковлига Павло Романович",
+  "Козачук Діана Романівна","Корольчук Діана Іванівна","Кузьма Олександр Олегович","Масик Максим Ігорович",
+  "Музика Юстина Олегівна","Окрепкий Остап Миколайович","Онисько Марта Олесівна","Прокопечко Роман Тарасович",
+  "Резекулов Володимир Володимирович","Рудик Домініка Миколаївна","Саламаха Марко Назарійович",
+  "Смола Святослав Володимирович","Спінул Вероніка Юріївна","Суханова Каріна Андріївна",
+  "Шевченко Дмитро Євгенович","Шпік Олег Володимирович"
+];
+
+const subjects = [
+  "Українська мова","Українська література","Математика","Алгебра","Геометрія",
+  "Історія України","Всесвітня історія","Біологія","Географія","Фізика","Хімія",
+  "Інформатика","Англійська мова","Німецька мова","Французька мова","Фізкультура",
+  "Трудове навчання","Музичне мистецтво","Образотворче мистецтво","Зарубіжна література",
+  "Правознавство","Громадянська освіта","Етика","Я досліджую світ"
+];
+
+const classSelect = document.getElementById("classSelect");
+const subjectSelect = document.getElementById("subjectSelect");
+const journalContainer = document.getElementById("journalContainer");
+
+["6-А","6-Б","6-В","6-Г","7-А","7-Б","7-В","7-Г","8-А","8-Б","8-В","8-Г",
+ "9-А","9-Б","9-В","9-Г","10-А","10-Б","10-В","10-Г","11-А","11-Б","11-В","11-Г"].forEach(c=>{
+  let opt=document.createElement("option"); opt.textContent=c; classSelect.appendChild(opt);
+});
+subjects.forEach(s=>{ let opt=document.createElement("option"); opt.textContent=s; subjectSelect.appendChild(opt); });
+
+const markSelect = document.getElementById("mark");
+for(let i=1;i<=12;i++){ let opt=document.createElement("option"); opt.value=i; opt.textContent=i; markSelect.appendChild(opt); }
+
+const today = new Date();
+
+function setZoom(value){
+  document.querySelectorAll(".month-table").forEach(t=>{ t.style.transform = `scale(${value/100})`; });
+}
+
+function checkClass(){
+  const cls = classSelect.value;
+  if(!cls.match(/^[6-9]|10|11/)){
+    alert("🔐Схоже цей клас заблоковано, спробуйте потім.");
+    journalContainer.innerHTML="";
+    return;
+  }
+  buildJournal();
+}
+
+function buildJournal(){
+  const cls = classSelect.value;
+  const subj = subjectSelect.value;
+  const key = cls+"_"+subj;
+  if(!journalData[key]) journalData[key]={};
+
+  journalContainer.innerHTML="";
+
+  const daysInMonth = 31; 
+
+  const table = document.createElement("table"); table.className="month-table"; journalContainer.appendChild(table);
+  const thead = document.createElement("thead"); table.appendChild(thead);
+  const tbody = document.createElement("tbody"); table.appendChild(tbody);
+
+  const headRow = document.createElement("tr");
+  const thName = document.createElement("th"); thName.textContent="Учні"; headRow.appendChild(thName);
+
+  for(let d=1; d<=daysInMonth; d++){
+    const th = document.createElement("th"); th.textContent=d;
+    const cellDate = new Date(today.getFullYear(), today.getMonth(), d);
+    if(cellDate.toDateString()===today.toDateString()) th.classList.add("today");
+    th.onclick=()=>{ th.classList.toggle("control"); };
+    headRow.appendChild(th);
+  }
+  thead.appendChild(headRow);
+
+  students.forEach((name,i)=>{
+    const tr = document.createElement("tr");
+    const tdName = document.createElement("td"); tdName.textContent=(i+1)+". "+name; tr.appendChild(tdName);
+    for(let d=1; d<=daysInMonth; d++){
+      const td = document.createElement("td");
+      const dateKey = today.getFullYear()+"-"+("0"+(today.getMonth()+1)).slice(-2)+"-"+("0"+d).slice(-2);
+      td.dataset.date=dateKey; td.dataset.student=i;
+      td.onclick=()=>cellClick(td,key);
+      if(journalData[key][dateKey+"_"+i]) td.innerHTML=journalData[key][dateKey+"_"+i];
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+function cellClick(cell,key){
+  activeCell=cell; activeKey=key;
+  const storageKey = cell.dataset.date+"_"+cell.dataset.student;
+  if(commentsStore[activeKey] && commentsStore[activeKey][storageKey]){
+    document.getElementById("overlay").style.display="block";
+    document.getElementById("choicePopup").style.display="block";
+  } else openPopup();
+}
+function openPopup(){ document.getElementById("overlay").style.display="block"; document.getElementById("popup").style.display="block"; }
+function closePopup(){ document.getElementById("overlay").style.display="none"; document.getElementById("popup").style.display="none"; }
+function closeChoice(){ document.getElementById("overlay").style.display="none"; document.getElementById("choicePopup").style.display="none"; }
+function readComment(){ const storageKey = activeCell.dataset.date+"_"+activeCell.dataset.student; alert("💭 Коментар: "+(commentsStore[activeKey]?.[storageKey] || "Коментар відсутній")); closeChoice(); }
+function editData(){ closeChoice(); openPopup(); }
+function saveData(){
+  const mark=document.getElementById("mark").value;
+  const comm=document.getElementById("comment").value;
+  const absent=document.getElementById("absent").checked;
+  let text = absent ? "Н" : (mark? mark:"");
+  if(comm) text+=" 💭";
+  activeCell.innerHTML=text;
+  const storageKey = activeCell.dataset.date+"_"+activeCell.dataset.student;
+  journalData[activeKey][storageKey]=text;
+  if(comm){ if(!commentsStore[activeKey]) commentsStore[activeKey]={}; commentsStore[activeKey][storageKey]=comm; }
+  closePopup();
+}
+
+window.onload=()=>{
+  classSelect.value="6-А";
+  subjectSelect.value="Математика";
+  buildJournal();
+};
+</script>
+
+</body>
+</html>
