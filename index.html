@@ -17,7 +17,20 @@ h1 { color: #333; display: inline-block; margin-right: 10px; }
 .event-column { background-color: #ADD8E6 !important; }
 .event-title { font-size: 11px; margin-top: 2px; display: block; color: #000; }
 #studentSearch { margin-bottom:10px; width:300px; padding:5px; }
-.big-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; border: 1px solid #aaa; box-shadow: 0 2px 8px rgba(0,0,0,0.4); z-index: 200; display: none; width: 300px; padding: 15px; border-radius: 8px; text-align: center; }
+.big-popup {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border: 1px solid #aaa;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  z-index: 200;
+  display: none;
+  width: 300px;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
 .big-popup h3 { margin-top: 0; margin-bottom: 10px; font-size: 16px; }
 .big-popup .marks { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 10px; }
 .big-popup .marks div { padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; }
@@ -28,11 +41,50 @@ h1 { color: #333; display: inline-block; margin-right: 10px; }
 .big-popup .save-btn { background: #fff; border: 2px solid #000; }
 .big-popup .delete-btn { background: #000; color: #fff; }
 .big-popup .close-btn { position: absolute; top: 5px; right: 10px; font-size: 20px; cursor: pointer; }
-.plus-icon { display: none; position: absolute; font-size: 18px; background: #fff; border: 1px solid #aaa; border-radius: 50%; width: 22px; height: 22px; line-height: 20px; text-align: center; cursor: pointer; z-index: 150; }
-.overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 500; display: none; }
-.warning-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #fff; padding: 20px; border-radius: 10px; width: 350px; text-align: center; z-index: 600; display: none; }
+.plus-icon {
+  display: none;
+  position: absolute;
+  font-size: 18px;
+  background: #fff;
+  border: 1px solid #aaa;
+  border-radius: 50%;
+  width: 22px; height: 22px;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  z-index: 150;
+}
+.overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.6);
+  z-index: 500;
+  display: none;
+}
+.warning-box {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  width: 350px;
+  text-align: center;
+  z-index: 600;
+  display: none;
+}
 .warning-box h2 { margin-top: 0; color: #d32f2f; }
-.warning-box button { margin-top: 15px; padding: 10px 20px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; background: #4CAF50; color: #fff; }
+.warning-box button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #4CAF50;
+  color: #fff;
+}
 .warning-timer { font-size: 14px; margin-top: 8px; color: #333; }
 .mark-red { color: red; }
 .mark-yellow { color: orange; }
@@ -40,29 +92,22 @@ h1 { color: #333; display: inline-block; margin-right: 10px; }
 </style>
 </head>
 <body>
-
 <h1>Журнал класу</h1>
 <span id="lockButton" onclick="toggleLock()">🔓</span>
-
 <div class="toolbar">
 Клас: <select id="classSelect" onchange="checkClass()"></select>
 Предмет: <select id="subjectSelect" onchange="buildJournal()"></select>
 </div>
-
 <input type="text" id="studentSearch" placeholder="Пошук учня..." oninput="searchStudent()">
-
 <div style="margin-bottom:10px;">
 📌 Д/з: <input type="text" id="homeworkInput" placeholder="Введіть домашнє завдання" style="width:60%;">
 <button onclick="saveHomework()">💾 Зберегти</button>
 </div>
 <div id="homeworkDisplay" style="margin-bottom:10px; font-weight:bold; color:#d32f2f;">‼️Домашнє завдання: </div>
-
 <div class="scale-control">
 Масштаб: <input type="range" min="50" max="150" value="100" id="zoomRange" oninput="setZoom(this.value)"> %
 </div>
-
 <div id="journalContainer"></div>
-
 <div class="big-popup" id="bigPopup">
   <span class="close-btn" onclick="closeBigPopup()">✖</span>
   <h3>Оберіть оцінку</h3>
@@ -74,24 +119,20 @@ h1 { color: #333; display: inline-block; margin-right: 10px; }
     <button class="delete-btn" onclick="deleteBigPopup()">Видалити</button>
   </div>
 </div>
-
 <div class="plus-icon" id="plusIcon">+</div>
-
 <div class="overlay" id="overlay"></div>
 <div class="warning-box" id="warningBox">
   <h2>📌 Увага!</h2>
-  <p>Цей сайт є демонстрацією електронного журналу!<br>Не використовуйте в цілях для обману та шахрайства!</p>
-  <p>✨ <b>Інструкція:</b><br>Натисніть 2 рази по клітинці на яку ви хочете поставити оцінку,<br>інтерфейс інтуїтивно зрозумілий.</p>
+  <p>Цей сайт є демонстрацією електронного журналу!<br>
+  Не використовуйте в цілях для обману та шахрайства!</p>
+  <p>✨ <b>Інструкція:</b><br>
+  Натисніть 2 рази по клітинці на яку ви хочете поставити оцінку,<br>
+  інтерфейс інтуїтивно зрозумілий.</p>
   <button id="continueBtn" disabled>😌 Продовжити</button>
   <div class="warning-timer" id="timer">Можна натиснути через 3 сек</div>
 </div>
-
 <script>
-// Весь JS код з твоєї версії, який генерує таблицю, popup, масштаб, пошук і Д/З
-
-// JS код залишено як у твоєму файлі (з усіма функціями для журналу, масштабування, popup, замок, домашнє завдання)
-
+// (JS code скорочено для збереження компактності)
 </script>
-
 </body>
 </html>
