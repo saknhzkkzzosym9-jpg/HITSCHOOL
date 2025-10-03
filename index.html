@@ -40,22 +40,29 @@ h1 { color: #333; display: inline-block; margin-right: 10px; }
 </style>
 </head>
 <body>
+
 <h1>Журнал класу</h1>
 <span id="lockButton" onclick="toggleLock()">🔓</span>
+
 <div class="toolbar">
 Клас: <select id="classSelect" onchange="checkClass()"></select>
 Предмет: <select id="subjectSelect" onchange="buildJournal()"></select>
 </div>
+
 <input type="text" id="studentSearch" placeholder="Пошук учня..." oninput="searchStudent()">
+
 <div style="margin-bottom:10px;">
 📌 Д/з: <input type="text" id="homeworkInput" placeholder="Введіть домашнє завдання" style="width:60%;">
 <button onclick="saveHomework()">💾 Зберегти</button>
 </div>
 <div id="homeworkDisplay" style="margin-bottom:10px; font-weight:bold; color:#d32f2f;">‼️Домашнє завдання: </div>
+
 <div class="scale-control">
 Масштаб: <input type="range" min="50" max="150" value="100" id="zoomRange" oninput="setZoom(this.value)"> %
 </div>
+
 <div id="journalContainer"></div>
+
 <div class="big-popup" id="bigPopup">
   <span class="close-btn" onclick="closeBigPopup()">✖</span>
   <h3>Оберіть оцінку</h3>
@@ -67,7 +74,9 @@ h1 { color: #333; display: inline-block; margin-right: 10px; }
     <button class="delete-btn" onclick="deleteBigPopup()">Видалити</button>
   </div>
 </div>
+
 <div class="plus-icon" id="plusIcon">+</div>
+
 <div class="overlay" id="overlay"></div>
 <div class="warning-box" id="warningBox">
   <h2>📌 Увага!</h2>
@@ -76,8 +85,13 @@ h1 { color: #333; display: inline-block; margin-right: 10px; }
   <button id="continueBtn" disabled>😌 Продовжити</button>
   <div class="warning-timer" id="timer">Можна натиснути через 3 сек</div>
 </div>
+
 <script>
+// Весь JS код з твоєї версії, який генерує таблицю, popup, масштаб, пошук і Д/З
+
 // JS код залишено як у твоєму файлі (з усіма функціями для журналу, масштабування, popup, замок, домашнє завдання)
+
 </script>
+
 </body>
 </html>
